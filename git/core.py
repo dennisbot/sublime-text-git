@@ -8,6 +8,7 @@ from . import GitWindowCommand, GitTextCommand
 
 class GitCustomCommand(GitWindowCommand):
     may_change_files = True
+    custom_title = ''
 
     def run(self):
         self.get_window().show_input_panel(
@@ -22,8 +23,20 @@ class GitCustomCommand(GitWindowCommand):
             return
         import shlex
         command_splitted = ['git'] + shlex.split(command)
+        self.custom_title = ' '.join(command_splitted)
         print(command_splitted)
-        self.run_command(command_splitted)
+        self.run_command(command_splitted, self.custom_done)
+
+    def custom_done(self, result):
+        if not result.strip():
+            self.panel("No output")
+            return
+        s = sublime.load_settings("Git.sublime-settings")
+        syntax = s.get("diff_syntax", "Packages/Git/syntax/Git Diff.sublime-syntax")
+        if s.get('diff_panel'):
+            self.panel(result, syntax=syntax)
+        else:
+            self.scratch(result, title=self.custom_title, syntax=syntax, word_wrap=True)
 
 
 class GitRawCommand(GitWindowCommand):
